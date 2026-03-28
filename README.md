@@ -1,1 +1,0 @@
-# PracticalQuiz3
