@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Solar System</title>
+    <script src="script/aframe.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+        }
+    </style>
+
+    <script>
+        // Custom component for orbital revolution
+        AFRAME.registerComponent('orbit', {
+            schema: {
+                speed: {type: 'number', default: 1},
+                radius: {type: 'number', default: 5},
+                startAngle: {type: 'number', default: 0}
+            },
+            init: function () {
+                this.angle = this.data.startAngle * (Math.PI / 180);
+            },
+            tick: function (time, deltaTime) {
+                const speed = this.data.speed;
+                const radius = this.data.radius;
+                this.angle += (speed * deltaTime * 0.001) * (Math.PI / 180) * 10;
+                const x = radius * Math.cos(this.angle);
+                const z = radius * Math.sin(this.angle);
+                this.el.setAttribute('position', {x: x, y: 0, z: z});
+            }
+        });
+
+        // Custom component for self-rotation
+        AFRAME.registerComponent('self-rotate', {
+            schema: {
+                speed: {type: 'number', default: 1}
+            },
+            tick: function (time, deltaTime) {
+                const rotation = this.el.getAttribute('rotation');
+                this.el.setAttribute('rotation', {
+                    x: rotation.x,
+                    y: rotation.y + this.data.speed * deltaTime * 0.05,
+                    z: rotation.z
+                });
+            }
+        });
+
+        // Custom component for moon orbit around earth
+        AFRAME.registerComponent('moon-orbit', {
+            schema: {
+                speed: {type: 'number', default: 5},
+                radius: {type: 'number', default: 1.2}
+            },
+            init: function () {
+                this.angle = 0;
+                // Get parent (earth pivot)
+                this.earthPivot = this.el.parentEl;
+            },
+            tick: function (time, deltaTime) {
+                this.angle += this.data.speed * deltaTime * 0.001 * (Math.PI / 180) * 100;
+                const x = this.data.radius * Math.cos(this.angle);
+                const z = this.data.radius * Math.sin(this.angle);
+                this.el.setAttribute('position', {x: x, y: 0.3, z: z});
+            }
+        });
+    </script>
+</head>
+<body onclick="playAudio()">
+    <script>
+        function playAudio() {
+            const audio = document.getElementById('space-music');
+            if (audio) {
+                audio.play();
+            }
+        }
+    </script>
+
+<a-scene 
+    background="color: #000820"
+    renderer="antialias: true; colorManagement: true;"
+    vr-mode-ui="enabled: true">
+
+    <!-- ===== ASSETS ===== -->
+    <a-assets>
+        <img id="sun-tex"      src="texture/2k_sun.jpg">
+        <img id="mercury-tex"  src="texture/2k_mercury.jpg">
+        <img id="venus-tex"    src="texture/2k_venus_surface.jpg">
+        <img id="earth-tex"    src="texture/2k_earth_daymap.jpg">
+        <img id="moon-tex"     src="texture/2k_moon.jpg">
+        <img id="mars-tex"     src="texture/2k_mars.jpg">
+        <img id="jupiter-tex"  src="texture/2k_jupiter.jpg">
+        <img id="saturn-tex"   src="texture/2k_saturn.jpg">
+        <img id="uranus-tex"   src="texture/2k_uranus.jpg">
+        <img id="neptune-tex"  src="texture/2k_neptune.jpg">
+        <img id="space-tex"    src="texture/2k_stars_milky_way.jpg">
+        <audio id="space-music" src="texture/space.mp3" autoplay="true" loop="true"></audio>
+    </a-assets>
+
+    <!-- ===== LIGHTING ===== -->
+    <a-light type="ambient" color="#222244" intensity="0.4"></a-light>
+    <a-light type="point"
+             color="#FFF5E0"
+             intensity="2.5"
+             position="0 0 0"
+             decay="1"
+             distance="200">
+    </a-light>
+
+    <!-- ===================================================
+         SPACE BACKGROUND
+    ===================================================== -->
+    <a-sky src="#space-tex"></a-sky>
+
+    <!-- Background Music -->
+    <a-entity sound="src: #space-music; autoplay: true; loop: true; volume: 2.0"></a-entity>
+
+    <!-- ===================================================
+         SUN  (centre of scene)
+    ===================================================== -->
+    <a-sphere id="sun"
+              position="0 0 0"
+              radius="3.5"
+              src="#sun-tex"
+              emissive="#FFA500"
+              emissive-intensity="1.5"
+              self-rotate="speed: 0.3"
+              segments-height="64"
+              segments-width="64">
+    </a-sphere>
+
+    <!-- Enhanced SUN glow -->
+    <a-sphere position="0 0 0"
+              radius="4.2"
+              color="#FF6600"
+              opacity="0.3"
+              shader="flat">
+    </a-sphere>
+    
+    <!-- Outer SUN glow -->
+    <a-sphere position="0 0 0"
+              radius="5.0"
+              color="#FF4400"
+              opacity="0.15"
+              shader="flat">
+    </a-sphere>
+
+    <!-- ===================================================
+         ORBIT RINGS (visual)
+    ===================================================== -->
+    <!-- Mercury orbit ring -->
+    <a-torus position="0 0 0" radius="6"   radius-tubular="0.05"
+             rotation="-90 0 0" color="#ffffff" opacity="0.4"
+             segments-tubular="120" segments-radial="8"></a-torus>
+
+    <!-- Venus orbit ring -->
+    <a-torus position="0 0 0" radius="9"   radius-tubular="0.05"
+             rotation="-90 0 0" color="#ffffff" opacity="0.4"
+             segments-tubular="120" segments-radial="8"></a-torus>
+
+    <!-- Earth orbit ring -->
+    <a-torus position="0 0 0" radius="13"  radius-tubular="0.05"
+             rotation="-90 0 0" color="#ffffff" opacity="0.4"
+             segments-tubular="140" segments-radial="8"></a-torus>
+
+    <!-- Mars orbit ring -->
+    <a-torus position="0 0 0" radius="17"  radius-tubular="0.05"
+             rotation="-90 0 0" color="#ffffff" opacity="0.4"
+             segments-tubular="160" segments-radial="8"></a-torus>
+
+    <!-- Jupiter orbit ring -->
+    <a-torus position="0 0 0" radius="23"  radius-tubular="0.05"
+             rotation="-90 0 0" color="#ffffff" opacity="0.4"
+             segments-tubular="180" segments-radial="8"></a-torus>
+
+    <!-- Saturn orbit ring -->
+    <a-torus position="0 0 0" radius="30"  radius-tubular="0.05"
+             rotation="-90 0 0" color="#ffffff" opacity="0.4"
+             segments-tubular="200" segments-radial="8"></a-torus>
+
+    <!-- Uranus orbit ring -->
+    <a-torus position="0 0 0" radius="37"  radius-tubular="0.05"
+             rotation="-90 0 0" color="#ffffff" opacity="0.4"
+             segments-tubular="220" segments-radial="8"></a-torus>
+
+    <!-- Neptune orbit ring -->
+    <a-torus position="0 0 0" radius="44"  radius-tubular="0.05"
+             rotation="-90 0 0" color="#ffffff" opacity="0.4"
+             segments-tubular="240" segments-radial="8"></a-torus>
+
+    <!-- ===================================================
+         MERCURY  — radius 6, speed 4.74 (fastest)
+    ===================================================== -->
+    <a-entity id="mercury-pivot" orbit="radius: 6; speed: 4.74; startAngle: 20">
+        <a-sphere radius="0.38"
+                  src="#mercury-tex"
+                  self-rotate="speed: 0.5"
+                  segments-height="32"
+                  segments-width="32">
+        </a-sphere>
+        <!-- Label -->
+        <a-text value="MERCURY" align="center"
+                position="0 0.8 0" scale="1.2 1.2 1.2"
+                color="#FFD700" look-at="[camera]"></a-text>
+    </a-entity>
+
+    <!-- ===================================================
+         VENUS  — radius 9, speed 3.50
+    ===================================================== -->
+    <a-entity id="venus-pivot" orbit="radius: 9; speed: 3.50; startAngle: 60">
+        <a-sphere radius="0.95"
+                  src="#venus-tex"
+                  self-rotate="speed: 0.3"
+                  segments-height="32"
+                  segments-width="32">
+        </a-sphere>
+        <a-text value="VENUS" align="center"
+                position="0 1.4 0" scale="1.2 1.2 1.2"
+                color="#FFD700" look-at="[camera]"></a-text>
+    </a-entity>
+
+    <!-- ===================================================
+         EARTH  — radius 13, speed 2.98
+         (Moon orbits Earth)
+    ===================================================== -->
+    <a-entity id="earth-pivot" orbit="radius: 13; speed: 2.98; startAngle: 120">
+        <!-- Earth -->
+        <a-sphere radius="1.0"
+                  src="#earth-tex"
+                  self-rotate="speed: 1.0"
+                  segments-height="64"
+                  segments-width="64">
+        </a-sphere>
+
+        <!-- Moon orbiting Earth -->
+        <a-sphere id="moon"
+                  radius="0.27"
+                  src="#moon-tex"
+                  moon-orbit="speed: 8; radius: 1.8"
+                  self-rotate="speed: 0.2"
+                  segments-height="32"
+                  segments-width="32">
+        </a-sphere>
+
+        <!-- Moon label -->
+        <a-entity moon-orbit="speed: 8; radius: 1.8">
+            <!-- label handled separately below for clarity -->
+        </a-entity>
+
+        <a-text value="EARTH" align="center"
+                position="0 1.6 0" scale="1.2 1.2 1.2"
+                color="#FFD700" look-at="[camera]"></a-text>
+
+        <a-text value="MOON" align="center"
+                position="1.8 0.8 0" scale="0.9 0.9 0.9"
+                color="#AAAAAA" look-at="[camera]"></a-text>
+    </a-entity>
+
+    <!-- ===================================================
+         MARS  — radius 17, speed 2.41
+    ===================================================== -->
+    <a-entity id="mars-pivot" orbit="radius: 17; speed: 2.41; startAngle: 200">
+        <a-sphere radius="0.53"
+                  src="#mars-tex"
+                  self-rotate="speed: 0.9"
+                  segments-height="32"
+                  segments-width="32">
+        </a-sphere>
+        <a-text value="MARS" align="center"
+                position="0 1.0 0" scale="1.2 1.2 1.2"
+                color="#FFD700" look-at="[camera]"></a-text>
+    </a-entity>
+
+    <!-- ===================================================
+         JUPITER  — radius 23, speed 1.31
+    ===================================================== -->
+    <a-entity id="jupiter-pivot" orbit="radius: 23; speed: 1.31; startAngle: 270">
+        <a-sphere radius="2.2"
+                  src="#jupiter-tex"
+                  self-rotate="speed: 2.4"
+                  segments-height="64"
+                  segments-width="64">
+        </a-sphere>
+        <a-text value="JUPITER" align="center"
+                position="0 2.8 0" scale="1.4 1.4 1.4"
+                color="#FFD700" look-at="[camera]"></a-text>
+    </a-entity>
+
+    <!-- ===================================================
+         SATURN  — radius 30, speed 0.97
+         (with rings)
+    ===================================================== -->
+    <a-entity id="saturn-pivot" orbit="radius: 30; speed: 0.97; startAngle: 320">
+        <a-sphere radius="1.8"
+                  src="#saturn-tex"
+                  self-rotate="speed: 2.2"
+                  segments-height="64"
+                  segments-width="64">
+        </a-sphere>
+
+        <!-- Saturn ring system -->
+        <a-torus radius="3.0" radius-tubular="0.55"
+                 rotation="90 0 0"
+                 color="#C2A46E"
+                 opacity="0.75"
+                 segments-tubular="80"
+                 segments-radial="8">
+        </a-torus>
+        <a-torus radius="3.8" radius-tubular="0.35"
+                 rotation="90 0 0"
+                 color="#B89A60"
+                 opacity="0.55"
+                 segments-tubular="80"
+                 segments-radial="8">
+        </a-torus>
+
+        <a-text value="SATURN" align="center"
+                position="0 2.6 0" scale="1.4 1.4 1.4"
+                color="#FFD700" look-at="[camera]"></a-text>
+    </a-entity>
+
+    <!-- ===================================================
+         URANUS  — radius 37, speed 0.68
+    ===================================================== -->
+    <a-entity id="uranus-pivot" orbit="radius: 37; speed: 0.68; startAngle: 50">
+        <a-sphere radius="1.3"
+                  src="#uranus-tex"
+                  self-rotate="speed: 1.4"
+                  segments-height="32"
+                  segments-width="32">
+        </a-sphere>
+        <!-- Uranus faint rings -->
+        <a-torus radius="2.0" radius-tubular="0.08"
+                 rotation="0 0 0"
+                 color="#7FFFD4"
+                 opacity="0.35"
+                 segments-tubular="60"
+                 segments-radial="8">
+        </a-torus>
+        <a-text value="URANUS" align="center"
+                position="0 2.0 0" scale="1.3 1.3 1.3"
+                color="#FFD700" look-at="[camera]"></a-text>
+    </a-entity>
+
+    <!-- ===================================================
+         NEPTUNE  — radius 44, speed 0.54
+    ===================================================== -->
+    <a-entity id="neptune-pivot" orbit="radius: 44; speed: 0.54; startAngle: 150">
+        <a-sphere radius="1.2"
+                  src="#neptune-tex"
+                  self-rotate="speed: 1.5"
+                  segments-height="32"
+                  segments-width="32">
+        </a-sphere>
+        <a-text value="NEPTUNE" align="center"
+                position="0 1.8 0" scale="1.3 1.3 1.3"
+                color="#FFD700" look-at="[camera]"></a-text>
+    </a-entity>
+
+    <!-- ===================================================
+         SUN LABEL
+    ===================================================== -->
+    <a-text value="SUN" align="center"
+            position="0 4.5 0" scale="2 2 2"
+            color="#FFD700" look-at="[camera]">
+    </a-text>
+
+    <!-- ===================================================
+         CAMERA  — pull back so full system is visible
+    ===================================================== -->
+    <a-entity id="rig" position="0 18 70">
+        <a-camera fov="75"
+                  near="0.1"
+                  far="1000"
+                  look-controls
+                  wasd-controls="acceleration: 50">
+        </a-camera>
+    </a-entity>
+
+</a-scene>
+
+</body>
+</html>
